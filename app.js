@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 // config
 import {config} from 'dotenv';
 import morgan from 'morgan';
+import userRoutes from './routes/user.routes.js'
+import errorMiddleware from './middelware/error.middleware.js';
 config();
 
 const app = express();
@@ -22,11 +24,14 @@ app.use('/ping' , function(req , res){
 
 // Routs for 3 modules
 
+app.use('/api/v1.user' , userRoutes)
 
 
 app.all('*' , (req , res)=>{
     res.status(404).send('OOPS !! 404 page not found');
 });
+// A generic Error Handling
 
+app.use(errorMiddleware);
 // Export
 export default app;
