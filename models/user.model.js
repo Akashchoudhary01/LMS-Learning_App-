@@ -1,6 +1,7 @@
 import { Schema , model } from "mongoose";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto'
 
 const userSchema = new Schema({
     fullName:{
@@ -76,6 +77,19 @@ userSchema.methods = {
     // Compare Password
     comparePassword :async function(plainTextPassword){
         return await bcrypt.compare(plainTextPassword , this.Password);
+
+    },
+    // forgot password
+    generatePasswordResetToken:async ()=>{
+        const resetToken = crypto.randomBytes(20).toString('hex');
+         
+        this.forgotPasswordExpiry = 'Date.now( +15*60*1000'; //15 min from now
+         this.forgotPasswordToken = crypto
+         .createHash('sha256')
+         .update(resetToken)
+         .digest('hex')
+
+         return resetToken;
 
     }
 };

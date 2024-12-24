@@ -21,10 +21,11 @@ app.use(morgan('dev'))
 app.use('/ping' , function(req , res){
     res.send("pong");
 });
+app.use(express.urlencoded({extended:true}));
 
 // Routs for 3 modules
 
-app.use('/api/v1.user' , userRoutes)
+app.use('/api/v1/user' , userRoutes)
 
 
 app.all('*' , (req , res)=>{
