@@ -83,7 +83,8 @@ userSchema.methods = {
     generatePasswordResetToken:async ()=>{
         const resetToken = crypto.randomBytes(20).toString('hex');
          
-        this.forgotPasswordExpiry = 'Date.now( +15*60*1000'; //15 min from now
+        this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes from now
+
          this.forgotPasswordToken = crypto
          .createHash('sha256')
          .update(resetToken)
