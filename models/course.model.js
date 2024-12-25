@@ -31,7 +31,7 @@ const courseSchema =  new Schema({
             required :true 
         }
     },
-    lactures:[
+    lectures:[
         {
             title:String,
             description:String,
