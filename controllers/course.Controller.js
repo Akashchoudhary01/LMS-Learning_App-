@@ -90,7 +90,23 @@ const createCourse =async (req, res , next)=>{
 }
 const updateCourse =async (req, res , next)=>{
 try {
-   
+    const {id} = req.params;
+    const course = await Course.findByIdAndUpdate(
+        id,{
+            $set:req.body
+        },
+        {
+            runValidators:true
+        }
+    );
+    if(!course){
+        return next(new AppError('Course with given id dose not exist', 400))
+    }
+    res.status(200).json({
+        success:true,
+        message: 'Course Updated Successfully',
+        course
+    })
     
 } catch (err) {
     return next(new AppError(err.message , 400))
@@ -99,6 +115,23 @@ try {
 
 }
 const removeCourse =async (req, res , next)=>{
+try {
+    const { id} = req.params;
+    const course = await Course.findById(id);
+    if(!course){
+        return next(new AppError('Course Dose Not exist' , 400))
+    }
+    await Course.findByIdAndDelete(id);
+    res.status(200).json({
+        success:true,
+        message:'Course deleted Successfully'
+    })
+} catch (err) {
+    return next(new AppError(err.message , 400))
+    
+
+    
+}
 
 
 }
