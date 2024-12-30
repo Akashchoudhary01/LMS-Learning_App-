@@ -10,7 +10,12 @@ const cookieOptions = {
     secure:true
 }
 
-// Register
+
+/**
+ * @REGISTER
+ * @ROUTE @POST {{URL}}/api/v1/user/register
+ * @ACCESS Public
+ */
 const register = async(req , res , next) =>{
     try {
         const {fullName , email , Password , role} = req.body;
@@ -38,12 +43,13 @@ const register = async(req , res , next) =>{
             return next(new AppError('user registeation failed, please try again' , 400))
         }
 
-
+        // Run only if user sends a file
+        
         if(req.file){
             console.log(req.file);
             
             try {
-                const result =await cloudinary.v2.uploder.upload(req.file.path , {
+                const result =await cloudinary.v2.uploader.upload(req.file.path , {
                     folder: 'lms',
                     width: 250,
                     hight:250,
@@ -288,7 +294,7 @@ const updateUser = async(req , res , next)=>{
         user.fullName = fullName;
     }
     if(req.file){
-        await cloudinary.v2.uploader.distroy(user.avatar.public_id);
+        await cloudinary.v2.uploader.destroy(user.avatar.public_id);
         try {
             const result =await cloudinary.v2.uploder.upload(req.file.path , {
                 folder: 'lms',
