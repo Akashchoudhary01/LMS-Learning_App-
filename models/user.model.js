@@ -2,6 +2,7 @@ import { Schema , model } from "mongoose";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto'
+import AppError from "../utils/error.util.js";
 
 const userSchema = new Schema({
     fullName:{
@@ -75,10 +76,13 @@ userSchema.methods = {
         );
     },
     // Compare Password
-    comparePassword :async function(plainTextPassword){
-        return await bcrypt.compare(plainTextPassword , this.Password);
-
+    comparePassword: async function (plainTextPassword) {
+        if (!this.Password) {
+            return( new AppError("Password is not defined on this user document." , 400)
+        )}
+        return await bcrypt.compare(plainTextPassword, this.Password);
     },
+    
     // forgot password
     generatePasswordResetToken:async ()=>{
         const resetToken = crypto.randomBytes(20).toString('hex');

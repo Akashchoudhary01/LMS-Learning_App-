@@ -34,7 +34,8 @@ const register = async(req , res , next) =>{
             role,
             avatar:{
                 public_id:email,
-                secure_url:'https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg' 
+                // secure_url:'https://res.cloudinary.com/du9jzqlpt/image/upload/v1674647316/avatar_drzgxv.jpg' 
+                secure_url:process.env.CLOUDINARY_URL
 
             }
 
@@ -97,35 +98,39 @@ const register = async(req , res , next) =>{
 };
 
 // Login
-const login = async(req , res , next)=>{
+const login = async (req, res, next) => {
     try {
-        
-        const {email , Password} = req.body;
-    
-        if(!email || !Password){
-            return next(new AppError('All fields are required' , 400));
+        const { email, Password } = req.body;
+
+        if (!email || !Password) {
+            return next(new AppError('All fields are required', 400));
         }
-        const user = await User.findOne({
-            email
-        }).select('+Password');
-    
-        if(!user || !user.comparePassword(Password)){
-            return next(new AppError('Email Or Password Dose not match' , 400));
+
+        const user = await User.findOne({ email }).select('+Password');
+
+        if (!user) {
+            return next(new AppError('Email does not exist', 400));
         }
+
+        const isPasswordValid = await user.comparePassword(Password);
+
+        if (!isPasswordValid) {
+            return next(new AppError('Email or Password does not match', 400));
+        }
+
         const token = await user.generateJWTToken();
         user.Password = undefined;
-    
-        res.cookie('token' , token , cookieOptions);
-    
+
+        res.cookie('token', token, cookieOptions);
+
         res.status(200).json({
-            success:true,
-            message:"user loggedin successfully",
+            success: true,
+            message: "User logged in successfully",
             user,
         });
     } catch (e) {
-        return next(new AppError(e.message , 500));
+        return next(new AppError(e.message, 500));
     }
-
 };
 
 // LOGOUT
