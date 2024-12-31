@@ -1,4 +1,4 @@
-import { appendFile } from "fs";
+import path from 'path';
 import Course from "../models/course.model.js"
 import AppError from "../utils/error.util.js";
 import cloudinary from 'cloudinary';
@@ -9,7 +9,7 @@ const getAllCourses = async (req , res , next)=>{
 
     res.status(200).json({
         success:true,
-        message:'All Courses'.
+        message:'All Courses',
         courses,
     });
 

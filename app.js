@@ -29,7 +29,7 @@ app.use('/ping' , function(req , res){
 
 
 app.use('/api/v1/user' , userRoutes)
-app.use('/api/v1/course' , courseRoutes)
+app.use('/api/v1/courses' , courseRoutes)
 
 
 app.all('*' , (req , res)=>{
