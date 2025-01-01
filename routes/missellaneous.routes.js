@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import{
-    contactUs
+  contactUs ,
+  userStats
 } from '../controllers/miscellaous.Controller.js'
 import {isLoggedIn,
     authirizedRoles} from '../middelware/auth.middleware.js';

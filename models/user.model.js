@@ -31,6 +31,10 @@ const userSchema = new Schema({
         minLength : [8 , 'Password must be at least 5 charchter'],
         select:false,
     },
+    subscription: {
+        id: String,
+        status: String,
+    },
     avatar:{
         public_id:{
             type:'String'
@@ -51,7 +55,7 @@ const userSchema = new Schema({
     timeseries:true
 });
 
-// 
+// Hash Password
 userSchema.pre('save' , async function(next){
     if(!this.isModified('Password')){
         return next();
@@ -59,6 +63,7 @@ userSchema.pre('save' , async function(next){
     this.Password = await bcrypt.hash(this.Password , 10);
 
 })
+
 userSchema.methods = {
 
     generateJWTToken: async function(){

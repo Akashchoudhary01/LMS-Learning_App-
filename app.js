@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import userRoutes from './routes/user.routes.js'
 import courseRoutes from './routes/course.routes.js'
 import errorMiddleware from './middelware/error.middleware.js';
+import miscRoute from './routes/missellaneous.routes.js'
 config();
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/ping' , function(req , res){
 
 app.use('/api/v1/user' , userRoutes)
 app.use('/api/v1/courses' , courseRoutes)
+app.use('/api/v1/' , miscRoute)
 
 
 app.all('*' , (req , res)=>{

@@ -8,7 +8,7 @@ import sendEmail from "../utils/sendEmail.js";
  * @ROUTE @POST {{URL}}/api/v1/contact
  * @ACCESS Public
  */
-const contactUs = asyncHandler(async (req, res, next) => {
+export const contactUs = asyncHandler(async (req, res, next) => {
   // Destructuring the required data from req.body
   const { name, email, message } = req.body;
 
@@ -49,7 +49,7 @@ export const userStats = asyncHandler(async(req , res , next) =>{
     res.status(200).json({
         success: true,
         message: 'All registered users count',
-        allUsersCount,
+        allUserCount,
         subscribedUsersCount,
       });
 
