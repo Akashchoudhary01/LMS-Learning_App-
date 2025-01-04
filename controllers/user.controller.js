@@ -285,7 +285,7 @@ const changePassword =async (req , res , next)=>{
 // UpdateUser
 const updateUser = async(req , res , next)=>{
     const {fullName} = req.body;
-    const {id} = req.user.id;
+    const id = req.user.id;
 
     const user = await User.findById(id);
 
@@ -301,7 +301,7 @@ const updateUser = async(req , res , next)=>{
     if(req.file){
         await cloudinary.v2.uploader.destroy(user.avatar.public_id);
         try {
-            const result =await cloudinary.v2.uploder.upload(req.file.path , {
+            const result =await cloudinary.v2.uploader.upload(req.file.path , {
                 folder: 'lms',
                 width: 250,
                 hight:250,
@@ -330,7 +330,6 @@ const updateUser = async(req , res , next)=>{
     })
 
 }
-
 export {
     register ,
     login,
