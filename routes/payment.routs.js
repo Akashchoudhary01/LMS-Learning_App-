@@ -5,7 +5,7 @@ import { getRazorpayApiKey ,
     cancelSubscription,
     allPayments
   } from "../controllers/payment.Controller.js";
-import { authirizedRoles, isLoggedIn } from "../middelware/auth.middleware.js";
+import { authirizedRoles, authoriedSubscriber,isLoggedIn } from "../middelware/auth.middleware.js";
 
 const router = Router();
 
@@ -29,13 +29,14 @@ router
 router 
       .route('/unsubscribe')
       .post(isLoggedIn,
+        authoriedSubscriber,
         cancelSubscription)        
 router 
     .route('/')
     .get(isLoggedIn,
         authirizedRoles('ADMIN'),
         allPayments,
-    ); 
+    );  
  
     
 export default router  

@@ -8,7 +8,7 @@ import {
       removeLectureFromCourse, 
       updateCourse } from '../controllers/course.Controller.js';
 import upload from '../middelware/multer.middleware.js'
-import { authirizedRoles, isLoggedIn } from '../middelware/auth.middleware.js';
+import { authirizedRoles, authoriedSubscriber , isLoggedIn } from '../middelware/auth.middleware.js';
 const router = Router();
 
 router.route('/')  
@@ -21,7 +21,7 @@ router.route('/')
       );
       
       router.route('/:id') 
-      .get(getLectureByCoursesId)
+      .get(isLoggedIn , authoriedSubscriber , getLectureByCoursesId)
       .delete(
             isLoggedIn,
             authirizedRoles('ADMIN'),
