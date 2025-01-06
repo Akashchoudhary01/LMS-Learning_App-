@@ -3,6 +3,8 @@ import AppError from "../utils/error.util.js";
 import cloudinary from 'cloudinary';
 import fs from 'fs/promises';
 import crypto from 'crypto';
+import  jwt  from 'jsonwebtoken';
+
 
 const cookieOptions = {
     maxAge: 7*24*60*60*1000 , //7 days
@@ -99,6 +101,7 @@ const register = async(req , res , next) =>{
 
 // Login
 const login = async (req, res, next) => {
+
     try {
         const { email, Password } = req.body;
 
@@ -118,14 +121,17 @@ const login = async (req, res, next) => {
             return next(new AppError('Email or Password does not match', 400));
         }
 
-        const token = await user.generateJWTToken();
+        // const token = await user.generateJWTToken();
         user.Password = undefined;
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
 
         res.cookie('token', token, cookieOptions);
 
         res.status(200).json({
             success: true,
             message: "User logged in successfully",
+            token: token,
             user,
         });
     } catch (e) {
