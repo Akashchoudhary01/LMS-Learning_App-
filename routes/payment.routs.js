@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getRazorpayApiKey ,
-    bySubscription,
+    buySubscription,
     verifySubscription,
     cancelSubscription,
     allPayments
@@ -19,7 +19,7 @@ router
      .route('/subscribe')
      .post(
         isLoggedIn,
-        bySubscription
+        buySubscription
     );
 router 
       .route('/verify')

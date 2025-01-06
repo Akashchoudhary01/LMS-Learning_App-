@@ -2,17 +2,30 @@ import User from "../models/user.model.js";
 import { razorpay } from "../server.js";
 import AppError from "../utils/error.util.js";
 // import razorpay from 'razorpay'
+import asyncHandler from '../middelware/asyncHandler.js';
 import crypto from "crypto";
 import Payment from "../models/payment.model.js";
+
 
 /**
  * @GET_RAZORPAY_ID
  * @ROUTE @GET {{URL}}/api/v1/payments
  * @ACCESS Private (ADMIN only)
  */
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// console.log("Razorpay Key ID:", process.env.RAZORPAY_KEY_ID);
+// console.log("Razorpay Secret:", process.env.RAZORPAY_SECRET);
+// console.log("Razorpay Plan ID:", process.env.RAZORPAY_PLAN_ID);
+
+
+
 const getRazorpayApiKey = (req, res, next) => {
   try {
-    req.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Rezorpay Api Key ",
       key: process.env.RAZORPAY_KEY_ID,
@@ -27,39 +40,51 @@ const getRazorpayApiKey = (req, res, next) => {
  * @ROUTE @POST {{URL}}/api/v1/payments/subscribe
  * @ACCESS Private (Logged in user only)
  */
-const bySubscription = async (req, res, next) => {
+export const buySubscription = asyncHandler(async (req, res, next) => {
+  // Extracting ID from request obj
   try {
     const { id } = req.user;
-    const user = await User.findById(id);
 
+    // Finding the user based on the ID
+    const user = await User.findById(id);
+  
     if (!user) {
-      return next(new AppError("Unauthorized Please Login"));
+      return next(new AppError('Unauthorized, please login'));
     }
-    if (user === "ADMIN") {
-      return next(new AppError("Admin Cant purchase a subscription", 400));
+  
+    // Checking the user role
+    if (user.role === 'ADMIN') {
+      return next(new AppError('Admin cannot purchase a subscription', 400));
     }
-     // Creating a subscription using razorpay that we imported from the server
+  
+    // Creating a subscription using razorpay that we imported from the server
     const subscription = await razorpay.subscriptions.create({
       plan_id: process.env.RAZORPAY_PLAN_ID, // The unique plan ID
-      customer_notify: 1, //  1 means razorpay will handle notifying the customer, 0 means we will not notify the customer
-      total_count: 12, // 12 means it will charge every month for a 1-year sub.
+      customer_notify: 1, // Razorpay will notify the customer
+      total_count: 12, // Charge every month for a year
     });
+    console.log("Subscription created:", subscription);
+    
+  
     // Adding the ID and the status to the user account
     user.subscription.id = subscription.id;
     user.subscription.status = subscription.status;
-
-    await user.save(); //save the userObject 
-
+  
+    // Saving the user object
+    await user.save();
+  
     res.status(200).json({
       success: true,
-      message: "Subscribed Successsfully",
-      subscription_id: subscription,
+      message: 'subscribed successfully',
+      subscription_id: subscription.id,
     });
+    
   } catch (err) {
-    return next(new AppError(err.message, 500));
+    return next(new AppError(err.message , 404))
+    
   }
-};
-
+ 
+});
 /**
  * @VERIFY_SUBSCRIPTION
  * @ROUTE @POST {{URL}}/api/v1/payments/verify
@@ -274,7 +299,7 @@ const allPayments = async (req, res, _next) => {
 
 export {
   getRazorpayApiKey,
-  bySubscription,
+  // bySubscription,
   verifySubscription,
   cancelSubscription,
   allPayments,
