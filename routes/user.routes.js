@@ -1,18 +1,26 @@
-import {Router} from 'express';
-import { getProfile, login, logout, register , forgotPassword , resetPassword, changePassword, updateUser } from '../controllers/user.controller.js';
-import { isLoggedIn } from '../middelware/auth.middleware.js';
-import upload from '../middelware/multer.middleware.js';
+import { Router } from "express";
+import {
+  changePassword,
+  forgotPassword,
+  getLoggedInUserDetails,
+  loginUser,
+  logoutUser,
+  registerUser,
+  resetPassword,
+  updateUser,
+} from "../controllers/user.controller.js";
+import { isLoggedIn } from "../middelware/auth.middleware.js";
+import upload from "../middelware/multer.middleware.js";
 
 const router = Router();
 
-router.post('/register' , upload.single("avatar"), register);
-router.post('/login' , login);
-router.get('/logout' , logout);
-router.get('/me' , isLoggedIn, getProfile);
-router.post('/reset' , forgotPassword);
-router.post('/reset/:resetToken' , resetPassword);
-router.post('/change-passsword' , isLoggedIn , changePassword)
-router.put('/update/:id' , isLoggedIn ,upload.single("avatar") , updateUser )
-
+router.post("/register", upload.single("avatar"), registerUser);
+router.post("/login", loginUser);
+router.post("/logout", logoutUser);
+router.get("/me", isLoggedIn, getLoggedInUserDetails);
+router.post("/reset", forgotPassword);
+router.post("/reset/:resetToken", resetPassword);
+router.post("/change-password", isLoggedIn, changePassword);
+router.put("/update/:id", isLoggedIn, upload.single("avatar"), updateUser);
 
 export default router;

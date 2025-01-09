@@ -1,114 +1,102 @@
-import { Schema , model } from "mongoose";
+import crypto from 'crypto';
+
+import { Schema, model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto'
-import AppError from "../utils/error.util.js";
 
-const userSchema = new Schema({
-    fullName:{
-        type:'String',
-        required : [true , 'Name is require'],
-        minLength : [5 , 'Name must be at least 5 charchter'],
-        maxLength : [25 , 'Name must be less then 25 charchter'],
-        lowercase:true,
-        trim:true,
+const userSchema = new Schema(
+  {
+    fullName: {
+      type: String,
+      required: [true, 'Name is required'],
+      minlength: [5, 'Name must be at least 5 characters'],
+      lowercase: true,
+      trim: true, // Removes unnecessary spaces
     },
-    email:{
-        type:'String',
-        required : [true , 'email is require'],
-        lowercase:true,
-        trim:true,
-        unique:true,
-        match:[
-        /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:\\[\x00-\x7F]|[^\\"])*")@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+$/ ,'Please Fill a valid email'
-        ],
-        
-
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+      lowercase: true,
+      match: [
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        'Please fill in a valid email address',
+      ], // Matches email against regex
     },
-    Password:{
-        type:'String',
-        required : [true , 'Password is require'],
-        minLength : [8 , 'Password must be at least 5 charchter'],
-        select:false,
+    password: {
+      type: String,
+      required: [true, 'Password is required'],
+      minlength: [8, 'Password must be at least 8 characters'],
+      select: false, // Will not select password upon looking up a document
     },
     subscription: {
-        id: String,
-        status: String,
+      id: String,
+      status: String,
     },
-    avatar:{
-        public_id:{
-            type:'String'
-        },
-        secure_url:{
-            type:'String'
-        }
+    avatar: {
+      public_id: {
+        type: String,
+      },
+      secure_url: {
+        type: String,
+      },
     },
-    role:{
-        type:'String',
-        enum:['USER' , 'ADMIN'],
-        default:'USER'
+    role: {
+      type: String,
+      enum: ['USER', 'ADMIN'],
+      default: 'USER',
     },
-    forgotPasswordToken:String,
-    forgotPasswordExpiry:Date,
-    subscription:{
-        id:String,
-        status:String
-    }
+    forgotPasswordToken: String,
+    forgotPasswordExpiry: Date,
+  },
+  {
+    timestamps: true,
+  }
+);
 
-}, {
-    timeseries:true
+// Hashes password before saving to the database
+userSchema.pre('save', async function (next) {
+  // If password is not modified then do not hash it
+  if (!this.isModified('password')) return next();
+
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
-// Hash Password
-userSchema.pre('save' , async function(next){
-    if(!this.isModified('Password')){
-        return next();
-    }
-    this.Password = await bcrypt.hash(this.Password , 10);
-
-})
-
 userSchema.methods = {
+  // method which will help us compare plain password with hashed password and returns true or false
+  comparePassword: async function (plainPassword) {
+    return await bcrypt.compare(plainPassword, this.password);
+  },
 
-    generateJWTToken: async function(){
-        return await jwt.sign(
-            {
-                id: this._id,
-                email: this.email,
-                subscription: this.subscription,
-                role: this.role
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn:  process.env.JWT_EXPIRY
-            }
-        );
-    },
-    // Compare Password
-    comparePassword: async function (plainTextPassword) {
-        if (!this.Password) {
-            return( new AppError("Password is not defined on this user document." , 400)
-        )}
-        return await bcrypt.compare(plainTextPassword, this.Password);
-    },
-    
-    // forgot password
-    generatePasswordResetToken:async ()=>{
-        const resetToken = crypto.randomBytes(20).toString('hex');
-         
-        this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes from now
+  // Will generate a JWT token with user id as payload
+  generateJWTToken: async function () {
+    return await jwt.sign(
+      { id: this._id, role: this.role, subscription: this.subscription },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRY,
+      }
+    );
+  },
 
-         this.forgotPasswordToken = crypto
-         .createHash('sha256')
-         .update(resetToken)
-         .digest('hex')
+  // This will generate a token for password reset
+  generatePasswordResetToken: async function () {
+    // creating a random token using node's built-in crypto module
+    const resetToken = crypto.randomBytes(20).toString('hex');
 
-         return resetToken;
+    // Again using crypto module to hash the generated resetToken with sha256 algorithm and storing it in database
+    this.forgotPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
 
-    }
+    // Adding forgot password expiry to 15 minutes
+    this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000;
+
+    return resetToken;
+  },
 };
 
-
-const User = model ('User' , userSchema);
+const User = model('User', userSchema);
 
 export default User;
