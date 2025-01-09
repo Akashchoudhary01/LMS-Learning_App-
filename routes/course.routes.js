@@ -1,49 +1,36 @@
 import {Router } from 'express';
 import {
-      addLectureByCourseID,
+      addLectureToCourseById,
       createCourse,
       getAllCourses,
-      getLectureByCoursesId, 
-      removeCourse, 
+      getLecturesByCourseId,  
       removeLectureFromCourse, 
-      updateCourse } from '../controllers/course.Controller.js';
+      updateCourseById } from '../controllers/course.Controller.js';
 import upload from '../middelware/multer.middleware.js'
 import { authirizedRoles, authoriedSubscriber , isLoggedIn } from '../middelware/auth.middleware.js';
 const router = Router();
 
-router.route('/')  
-      .get(getAllCourses)
-      .post(
-            isLoggedIn,
-            authirizedRoles('ADMIN'),
-            upload.single('thumbnail'),
-            createCourse
-      );
-      
-      router.route('/:id') 
-      .get(isLoggedIn , authoriedSubscriber , getLectureByCoursesId)
-      .delete(
-            isLoggedIn,
-            authirizedRoles('ADMIN'),
-            removeCourse
-      )
-      .put(
-            isLoggedIn,
-            authirizedRoles('ADMIN'),
-            updateCourse
-      )
-      .post(
-            isLoggedIn,
-            authirizedRoles('ADMIN'),
-            upload.single('lecture'),
-            addLectureByCourseID
-      )
-      .delete(
-            isLoggedIn, 
-            authirizedRoles('ADMIN'), 
-            removeLectureFromCourse
-      );
-      
+// Refactored code
+router
+  .route('/')
+  .get(getAllCourses)
+  .post(
+    isLoggedIn,
+    authirizedRoles('ADMIN'),
+    upload.single('thumbnail'),
+    createCourse
+  )
+  .delete(isLoggedIn, authirizedRoles('ADMIN'), removeLectureFromCourse);
+
+router
+  .route('/:id')
+  .get(isLoggedIn, authoriedSubscriber, getLecturesByCourseId) // Added authorizeSubscribers to check if user is admin or subscribed if not then forbid the access to the lectures
+  .post(
+    isLoggedIn,
+    authirizedRoles('ADMIN'),
+    upload.single('lecture'),
+    addLectureToCourseById
+  )
+  .put(isLoggedIn, authirizedRoles('ADMIN'), updateCourseById);
 
 export default router;
-
