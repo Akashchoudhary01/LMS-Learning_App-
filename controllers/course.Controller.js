@@ -120,8 +120,6 @@ export const addLectureToCourseById = asyncHandler(async (req, res, next) => {
   const { title, description } = req.body;
   const { id } = req.params;
 
-  let lectureData = {};
-
   if (!title || !description) {
     return next(new AppError('Title and Description are required', 400));
   }
@@ -129,38 +127,38 @@ export const addLectureToCourseById = asyncHandler(async (req, res, next) => {
   const course = await Course.findById(id);
 
   if (!course) {
-    return next(new AppError('Invalid course id or course not found.', 400));
+    return next(new AppError('Invalid course ID or course not found.', 400));
   }
 
-  // Run only if user sends a file
+  const lectureData = {};
+
   if (req.file) {
     try {
       const result = await cloudinary.v2.uploader.upload(req.file.path, {
-        folder: 'lms', // Save files in a folder named lms
-        chunk_size: 50000000, // 50 mb size
+        folder: 'lms',
+        chunk_size: 50000000,
         resource_type: 'video',
       });
 
-      // If success
       if (result) {
-        // Set the public_id and secure_url in array
-        lectureData.public_id = result.public_id;
-        lectureData.secure_url = result.secure_url;
+        lectureData.public_id = result.public_id; // Store public_id
+        lectureData.secure_url = result.secure_url; // Store secure_url
       }
 
-      // After successful upload remove the file from local storage
-      fs.rm(`uploads/${req.file.filename}`);
+      // Remove the file from local storage
+      await fs.rm(`uploads/${req.file.filename}`);
     } catch (error) {
-      // Empty the uploads directory without deleting the uploads directory
+      console.error('Cloudinary Upload Error:', error.message);
+
+      // Clean up the uploads directory
       for (const file of await fs.readdir('uploads/')) {
         await fs.unlink(path.join('uploads/', file));
       }
 
-      // Send the error message
       return next(
         new AppError(
-          JSON.stringify(error) || 'File not uploaded, please try again',
-          400
+          'Failed to upload lecture video. Please try again.',
+          500
         )
       );
     }
@@ -169,89 +167,27 @@ export const addLectureToCourseById = asyncHandler(async (req, res, next) => {
   course.lectures.push({
     title,
     description,
-    lecture: lectureData,
+    lecture: lectureData, // Store lecture data
   });
 
   course.numberOfLectures = course.lectures.length;
 
-  // Save the course object
   await course.save();
 
-  res.status(200).json({
+  res.status(201).json({
     success: true,
-    message: 'Course lecture added successfully',
+    message: 'Lecture added successfully',
     course,
   });
 });
 
 /**
  * @Remove_LECTURE
- * @ROUTE @DELETE {{URL}}/api/v1/courses/:courseId/lectures/:lectureId
- * @ACCESS Private (Admin only)
- */
-// export const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
-//   // Grabbing the courseId and lectureId from req.query
-//   const { courseId, lectureId } = req.query;
-
-//   console.log(courseId);
-
-//   // Checking if both courseId and lectureId are present
-//   if (!courseId) {
-//     return next(new AppError('Course ID is required', 400));
-//   }
-
-//   if (!lectureId) {
-//     return next(new AppError('Lecture ID is required', 400));
-//   }
-
-//   // Find the course uding the courseId
-//   const course = await Course.findById(courseId);
-
-//   // If no course send custom message
-//   if (!course) {
-//     return next(new AppError('Invalid ID or Course does not exist.', 404));
-//   }
-
-//   // Find the index of the lecture using the lectureId
-//   const lectureIndex = course.lectures.findIndex(
-//     (lecture) => lecture._id.toString() === lectureId.toString()
-//   );
-
-//   // If returned index is -1 then send error as mentioned below
-//   if (lectureIndex === -1) {
-//     return next(new AppError('Lecture does not exist.', 404));
-//   }
-
-//   // Delete the lecture from cloudinary
-//   await cloudinary.v2.uploader.destroy(
-//     course.lectures[lectureIndex].lecture.public_id,
-//     {
-//       resource_type: 'video',
-//     }
-//   );
-
-//   // Remove the lecture from the array
-//   course.lectures.splice(lectureIndex, 1);
-
-//   // update the number of lectures based on lectres array length
-//   course.numberOfLectures = course.lectures.length;
-
-//   // Save the course object
-//   await course.save();
-
-//   // Return response
-//   res.status(200).json({
-//     success: true,
-//     message: 'Course lecture removed successfully',
-//   });
-// });
-/**
- * @Remove_LECTURE
- * @ROUTE @DELETE {{URL}}/api/v1/courses/:courseId/lectures/:lectureId
- * @ACCESS Private (Admin only)
+ * @ROUTE @Delete {{URL}}/api/v1/courses/:id
+ * @ACCESS Private (Admin Only)
  */
 export const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
-  // Grabbing the courseId and lectureId from req.params
+  // Grabbing the courseId and lectureId from req.query
   const { courseId, lectureId } = req.params;
 
   console.log(courseId);
@@ -265,10 +201,10 @@ export const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
     return next(new AppError('Lecture ID is required', 400));
   }
 
-  // Find the course using the courseId
+  // Find the course uding the courseId
   const course = await Course.findById(courseId);
 
-  // If no course, send custom message
+  // If no course send custom message
   if (!course) {
     return next(new AppError('Invalid ID or Course does not exist.', 404));
   }
@@ -278,12 +214,12 @@ export const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
     (lecture) => lecture._id.toString() === lectureId.toString()
   );
 
-  // If index is -1, send error
+  // If returned index is -1 then send error as mentioned below
   if (lectureIndex === -1) {
     return next(new AppError('Lecture does not exist.', 404));
   }
 
-  // Delete the lecture from Cloudinary
+  // Delete the lecture from cloudinary
   await cloudinary.v2.uploader.destroy(
     course.lectures[lectureIndex].lecture.public_id,
     {
@@ -294,7 +230,7 @@ export const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
   // Remove the lecture from the array
   course.lectures.splice(lectureIndex, 1);
 
-  // Update the number of lectures based on the lectures array length
+  // update the number of lectures based on lectres array length
   course.numberOfLectures = course.lectures.length;
 
   // Save the course object
@@ -306,6 +242,7 @@ export const removeLectureFromCourse = asyncHandler(async (req, res, next) => {
     message: 'Course lecture removed successfully',
   });
 });
+
 
 /**
  * @UPDATE_COURSE_BY_ID

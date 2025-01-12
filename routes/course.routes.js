@@ -20,11 +20,14 @@ router
     upload.single('thumbnail'),
     createCourse
   )
+// router
+
+//   .route('/:courseId/lectures/:lectureId')
+//   .delete(isLoggedIn, authirizedRoles('ADMIN'), removeLectureFromCourse);
 router
   .route('/:courseId/lectures/:lectureId')
-  .delete(isLoggedIn, authirizedRoles('ADMIN'), removeLectureFromCourse);
+  .delete(isLoggedIn, authirizedRoles('ADMIN'), removeLectureFromCourse);  // Make sure this route matches
 
-  // .delete(isLoggedIn, authirizedRoles('ADMIN'), removeLectureFromCourse);
 
 router
   .route('/:id')
